@@ -2,7 +2,7 @@
 
 A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your latest submitted prompt visible while you work.
 
-![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-screenshot.png)
+![Screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-screenshot.png)
 
 ## What it does
 

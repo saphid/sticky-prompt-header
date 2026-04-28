@@ -53,8 +53,8 @@ export default function (pi: ExtensionAPI) {
 		return lines;
 	};
 
-	const startFloatingWindow = (ctx: ExtensionContext | ExtensionCommandContext) => {
-		if (overlayStarted || !ctx.hasUI) return;
+	const startFloatingWindow = (ctx: ExtensionContext | ExtensionCommandContext): boolean => {
+		if (overlayStarted || !ctx.hasUI) return false;
 		overlayStarted = true;
 
 		void ctx.ui.custom<void>(
@@ -91,15 +91,23 @@ export default function (pi: ExtensionAPI) {
 					overlayHandle = handle;
 				},
 			},
-		);
+		).catch((error) => {
+			overlayStarted = false;
+			overlayHandle = undefined;
+			closeOverlay = undefined;
+			requestRender = undefined;
+			ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+		});
+
+		return true;
 	};
 
 	pi.on("before_agent_start", async (event, ctx) => {
 		lastPrompt = event.prompt;
 		if (enabled) {
-			startFloatingWindow(ctx);
+			const created = startFloatingWindow(ctx);
 			overlayHandle?.setHidden(false);
-			requestRender?.();
+			if (!created) requestRender?.();
 		}
 	});
 
@@ -114,8 +122,8 @@ export default function (pi: ExtensionAPI) {
 
 			if (arg === "repaint" || arg === "redraw") {
 				repaintNonce++;
-				startFloatingWindow(ctx);
-				requestRender?.();
+				const created = startFloatingWindow(ctx);
+				if (!created) requestRender?.();
 				ctx.ui.notify("Sticky prompt header repainted", "info");
 				return;
 			}
@@ -127,9 +135,9 @@ export default function (pi: ExtensionAPI) {
 
 			enabled = !enabled;
 			if (enabled) {
-				startFloatingWindow(ctx);
+				const created = startFloatingWindow(ctx);
 				overlayHandle?.setHidden(false);
-				requestRender?.();
+				if (!created) requestRender?.();
 				ctx.ui.notify("Sticky prompt header enabled", "info");
 			} else {
 				overlayHandle?.setHidden(true);
