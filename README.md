@@ -2,12 +2,9 @@
 
 A tiny Pi extension that keeps your latest submitted prompt visible in a sticky banner at the top of the terminal.
 
-```text
-╭ Latest prompt ↟ ─────────────────────────╮
-│ your prompt text wraps here              │
-│ second line if needed                    │
-╰──────────────────────────────────────────╯
-```
+## Preview
+
+![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-mock.svg)
 
 ## Install
 
