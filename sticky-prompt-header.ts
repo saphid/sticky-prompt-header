@@ -17,17 +17,45 @@ export default function (pi: ExtensionAPI) {
 	let overlayHandle: OverlayHandle | undefined;
 	let closeOverlay: (() => void) | undefined;
 	let requestRender: (() => void) | undefined;
+	let repaintNonce = 0;
+	let repaintTimers: ReturnType<typeof setTimeout>[] = [];
+
+	const hasImageContent = (value: unknown): boolean => {
+		if (!Array.isArray(value)) return false;
+		return value.some((item) => typeof item === "object" && item !== null && (item as { type?: unknown }).type === "image");
+	};
+
+	const forceRepaintBurst = () => {
+		if (!enabled || !lastPrompt.trim()) return;
+		for (const timer of repaintTimers) clearTimeout(timer);
+		repaintTimers = [];
+
+		// Terminal image protocols paint pixel graphics after their placeholder rows
+		// have been written. Pi's overlay compositor runs before that image escape
+		// sequence, so image output can temporarily cover the sticky banner. Trigger
+		// a few no-op-different repaints after image tools finish so the banner is
+		// drawn last again.
+		for (let i = 0; i < 8; i++) {
+			repaintTimers.push(
+				setTimeout(() => {
+					repaintNonce++;
+					requestRender?.();
+				}, 120 + i * 180),
+			);
+		}
+	};
 
 	const promptBanner = (theme: Theme, width: number) => {
 		if (!enabled || !lastPrompt.trim()) return [];
 
 		const normalized = lastPrompt.replace(/\s+/g, " ").trim();
+		const repaintNoop = repaintNonce % 2 === 0 ? "\x1b[0m" : "\x1b[0m\x1b[0m";
 		const paintLine = (line: string) => theme.bg("userMessageBg", truncateToWidth(line, width, "", true));
 
 		// Tiny terminals get a single compact line rather than a broken box.
 		if (width < 24) {
 			const prefix = theme.bold(theme.fg("accent", "Prompt: "));
-			return [paintLine(prefix + theme.fg("text", normalized))];
+			return [paintLine(prefix + theme.fg("text", normalized)) + repaintNoop];
 		}
 
 		const border = (text: string) => theme.fg("borderAccent", text);
@@ -47,7 +75,9 @@ export default function (pi: ExtensionAPI) {
 			return `${border("│")} ${padded} ${border("│")}`;
 		});
 
-		return [top, ...body, bottom].map(paintLine);
+		const lines = [top, ...body, bottom].map(paintLine);
+		lines[0] += repaintNoop;
+		return lines;
 	};
 
 	const startOverlay = (ctx: ExtensionContext | ExtensionCommandContext) => {
@@ -98,7 +128,22 @@ export default function (pi: ExtensionAPI) {
 		requestRender?.();
 	});
 
+	pi.on("tool_execution_end", async (event) => {
+		if (hasImageContent((event as { result?: { content?: unknown } }).result?.content)) {
+			forceRepaintBurst();
+		}
+	});
+
+	pi.on("message_end", async (event) => {
+		const message = (event as { message?: { role?: unknown; content?: unknown } }).message;
+		if (message?.role === "toolResult" && hasImageContent(message.content)) {
+			forceRepaintBurst();
+		}
+	});
+
 	pi.on("session_shutdown", async () => {
+		for (const timer of repaintTimers) clearTimeout(timer);
+		repaintTimers = [];
 		closeOverlay?.();
 	});
 
