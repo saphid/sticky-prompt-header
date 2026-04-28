@@ -6,8 +6,6 @@ A tiny Pi extension that keeps your latest submitted prompt visible in a sticky 
 
 ![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-screenshot.png)
 
-[SVG source](assets/sticky-prompt-header-mock.svg)
-
 ## Install
 
 Copy the extension into Pi's global extensions directory:
