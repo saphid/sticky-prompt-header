@@ -1,10 +1,15 @@
 # Sticky Prompt Header for Pi
 
-A tiny Pi extension that keeps your latest submitted prompt visible in a sticky banner at the top of the terminal.
-
-## Preview
+A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your latest submitted prompt visible in a sticky banner at the top of the terminal.
 
 ![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-screenshot.png)
+
+## What it does
+
+- Pins the latest user prompt in a non-capturing overlay.
+- Keeps focus in Pi's normal editor and terminal UI.
+- Truncates long prompts to a compact two-line header.
+- Provides a toggle command plus a manual repaint command for awkward terminal redraws.
 
 ## Install
 
@@ -23,14 +28,16 @@ Then restart Pi or run:
 
 ## Usage
 
-Submit a prompt in Pi. The latest prompt appears in a non-capturing overlay pinned to the top of the terminal, so it does not steal focus from the editor.
+Submit any prompt in Pi. The latest prompt appears at the top of the terminal.
 
-Toggle it on/off with:
+Commands:
 
 ```text
-/sticky-prompt-header
+/sticky-prompt-header              # toggle on/off
+/sticky-prompt-header repaint      # force a redraw
+/sticky-prompt-header images       # toggle extra redraws after image tool output
 ```
 
 ## Notes
 
-This is a sticky overlay implementation. It does not currently wait until the original prompt scrolls to the top, because Pi extensions do not expose viewport/message-position events yet.
+This is a sticky overlay implementation. Pi extensions do not currently expose viewport or message-position events, so the header stays pinned immediately rather than waiting for the original prompt to scroll away.
