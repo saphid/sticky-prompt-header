@@ -4,7 +4,9 @@ A tiny Pi extension that keeps your latest submitted prompt visible in a sticky 
 
 ## Preview
 
-![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-mock.svg)
+![Mock screenshot of the Sticky Prompt Header extension](assets/sticky-prompt-header-screenshot.png)
+
+[SVG source](assets/sticky-prompt-header-mock.svg)
 
 ## Install
 

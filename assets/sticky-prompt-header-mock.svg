@@ -1,65 +1,122 @@
-<svg width="980" height="560" viewBox="0 0 980 560" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Mock screenshot of Sticky Prompt Header in Pi</title>
-  <desc id="desc">A terminal window with a sticky latest prompt banner pinned across the top.</desc>
+<svg width="1280" height="760" viewBox="0 0 1280 760" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Sticky Prompt Header mock screenshot</title>
+  <desc id="desc">A polished terminal mockup showing Pi with a sticky latest prompt banner pinned at the top of the terminal.</desc>
   <defs>
-    <linearGradient id="window" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#111827"/>
+    <linearGradient id="pageBg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#172554"/>
+      <stop offset="0.45" stop-color="#0f172a"/>
       <stop offset="1" stop-color="#020617"/>
     </linearGradient>
-    <linearGradient id="banner" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0" stop-color="#132238"/>
-      <stop offset="1" stop-color="#1e1b4b"/>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(270 150) rotate(38) scale(520 360)">
+      <stop stop-color="#38bdf8" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1080 620) rotate(158) scale(560 420)">
+      <stop stop-color="#8b5cf6" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="terminalBg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b1120"/>
+      <stop offset="1" stop-color="#020617"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/>
+    <linearGradient id="bannerBg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#082f49"/>
+      <stop offset="0.52" stop-color="#111827"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="bannerStroke" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <filter id="bigShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000000" flood-opacity="0.45"/>
     </filter>
+    <filter id="bannerShadow" x="-8%" y="-35%" width="116%" height="180%">
+      <feDropShadow dx="0" dy="20" stdDeviation="16" flood-color="#020617" flood-opacity="0.72"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#38bdf8" flood-opacity="0.18"/>
+    </filter>
+    <clipPath id="terminalClip">
+      <rect x="70" y="72" width="1140" height="616" rx="24"/>
+    </clipPath>
     <style>
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace; }
+      .sans { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; }
       .dim { fill: #64748b; }
       .muted { fill: #94a3b8; }
       .text { fill: #dbeafe; }
+      .soft { fill: #bfdbfe; }
       .accent { fill: #38bdf8; font-weight: 700; }
+      .purple { fill: #c4b5fd; font-weight: 700; }
       .green { fill: #34d399; }
       .yellow { fill: #fbbf24; }
       .red { fill: #fb7185; }
-      .border { stroke: #38bdf8; }
+      .label { fill: #e0f2fe; font-weight: 700; letter-spacing: 0.01em; }
     </style>
   </defs>
 
-  <rect width="980" height="560" rx="26" fill="#0f172a"/>
-  <rect x="28" y="28" width="924" height="504" rx="18" fill="url(#window)" filter="url(#shadow)"/>
+  <rect width="1280" height="760" rx="0" fill="url(#pageBg)"/>
+  <rect width="1280" height="760" fill="url(#glowA)"/>
+  <rect width="1280" height="760" fill="url(#glowB)"/>
 
-  <!-- title bar -->
-  <rect x="28" y="28" width="924" height="42" rx="18" fill="#111827"/>
-  <rect x="28" y="52" width="924" height="18" fill="#111827"/>
-  <circle cx="54" cy="49" r="7" fill="#fb7185"/>
-  <circle cx="76" cy="49" r="7" fill="#fbbf24"/>
-  <circle cx="98" cy="49" r="7" fill="#34d399"/>
-  <text x="490" y="54" text-anchor="middle" class="mono muted" font-size="14">pi — sticky prompt header</text>
+  <text x="70" y="42" class="sans label" font-size="22">Sticky Prompt Header for Pi</text>
+  <text x="1198" y="42" text-anchor="end" class="mono muted" font-size="15">mock screenshot</text>
 
-  <!-- sticky overlay banner -->
-  <rect x="52" y="88" width="876" height="112" rx="14" fill="url(#banner)" stroke="#38bdf8" stroke-width="1.5"/>
-  <text x="76" y="121" class="mono accent" font-size="18">╭ Latest prompt ↟ ───────────────────────────────────────────────────────────────────────╮</text>
-  <text x="76" y="151" class="mono text" font-size="18">│ Make the sticky prompt header feel nicer, with wrapping and a polished terminal frame │</text>
-  <text x="76" y="181" class="mono text" font-size="18">│ around the latest user prompt while keeping the editor focused.                       │</text>
+  <!-- Terminal shell -->
+  <g filter="url(#bigShadow)">
+    <rect x="70" y="72" width="1140" height="616" rx="24" fill="url(#terminalBg)" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="70" y="72" width="1140" height="52" rx="24" fill="#0f172a"/>
+    <rect x="70" y="98" width="1140" height="26" fill="#0f172a"/>
+  </g>
+  <circle cx="101" cy="99" r="7.5" fill="#fb7185"/>
+  <circle cx="125" cy="99" r="7.5" fill="#fbbf24"/>
+  <circle cx="149" cy="99" r="7.5" fill="#34d399"/>
+  <text x="640" y="104" text-anchor="middle" class="mono muted" font-size="15">pi /Users/alexsouthwell</text>
 
-  <!-- conversation behind it -->
-  <text x="58" y="236" class="mono dim" font-size="15">pi v0.70.5 · Ctrl+C interrupt · / commands · ! bash · Ctrl+T more</text>
-  <text x="58" y="276" class="mono muted" font-size="16">User</text>
-  <text x="108" y="276" class="mono text" font-size="16">Can we make the prompt stay visible when the conversation scrolls?</text>
-  <text x="58" y="318" class="mono accent" font-size="16">Assistant</text>
-  <text x="150" y="318" class="mono text" font-size="16">Yes — this extension pins the latest submitted prompt as a non-capturing overlay.</text>
-  <text x="150" y="348" class="mono text" font-size="16">It stays at the top without stealing focus from the input editor.</text>
+  <g clip-path="url(#terminalClip)">
+    <!-- Subtle content behind sticky overlay -->
+    <text x="96" y="162" class="mono dim" font-size="15">pi v0.70.5 · Ctrl+C interrupt · / commands · ! bash · Ctrl+T more</text>
+    <text x="96" y="204" class="mono muted" font-size="16">User</text>
+    <text x="154" y="204" class="mono text" font-size="16">Need to add more nice UI around the prompt</text>
+    <text x="96" y="244" class="mono accent" font-size="16">Assistant</text>
+    <text x="190" y="244" class="mono text" font-size="16">I'll wrap it in a compact sticky banner with themed colors.</text>
 
-  <!-- tool/status rows -->
-  <rect x="52" y="386" width="876" height="34" rx="8" fill="#0b1220" stroke="#1f2937"/>
-  <text x="70" y="408" class="mono green" font-size="15">✓</text>
-  <text x="96" y="408" class="mono muted" font-size="15">sticky-prompt-header loaded</text>
-  <text x="730" y="408" class="mono dim" font-size="15">nonCapturing: true</text>
+    <!-- Fade overlay to imply the sticky banner is above the scrolling conversation -->
+    <rect x="70" y="124" width="1140" height="190" fill="#020617" opacity="0.34"/>
 
-  <!-- editor -->
-  <rect x="52" y="448" width="876" height="58" rx="12" fill="#020617" stroke="#334155"/>
-  <text x="72" y="484" class="mono muted" font-size="17">›</text>
-  <text x="98" y="484" class="mono text" font-size="17">Ask Pi anything…</text>
-  <rect x="236" y="466" width="10" height="24" rx="2" fill="#38bdf8" opacity="0.9"/>
+    <!-- Sticky prompt banner -->
+    <g filter="url(#bannerShadow)">
+      <rect x="96" y="146" width="1088" height="136" rx="18" fill="url(#bannerBg)"/>
+      <rect x="96.75" y="146.75" width="1086.5" height="134.5" rx="17.25" stroke="url(#bannerStroke)" stroke-width="1.5"/>
+      <rect x="96" y="146" width="1088" height="136" rx="18" fill="#ffffff" opacity="0.025"/>
+    </g>
+    <rect x="122" y="169" width="178" height="32" rx="16" fill="#075985" opacity="0.95" stroke="#38bdf8" stroke-opacity="0.45"/>
+    <text x="144" y="191" class="sans label" font-size="16">Latest prompt</text>
+    <text x="272" y="191" class="mono accent" font-size="17">↟</text>
+    <text x="318" y="190" class="mono dim" font-size="16">sticky · non-capturing · top row</text>
+    <line x1="122" y1="214" x2="1158" y2="214" stroke="#38bdf8" stroke-opacity="0.22"/>
+    <text x="130" y="242" class="mono soft" font-size="18">Make the sticky prompt header feel nicer, with wrapping and a polished terminal frame</text>
+    <text x="130" y="269" class="mono soft" font-size="18">around the latest user prompt while keeping the editor focused.</text>
+
+    <!-- More conversation below banner -->
+    <text x="96" y="344" class="mono muted" font-size="16">Assistant</text>
+    <text x="190" y="344" class="mono text" font-size="16">Updated the extension and added a preview asset to the README.</text>
+    <rect x="96" y="374" width="1088" height="44" rx="10" fill="#0b1220" stroke="#1f2937"/>
+    <text x="116" y="402" class="mono green" font-size="16">✓</text>
+    <text x="146" y="402" class="mono muted" font-size="16">sticky-prompt-header.ts</text>
+    <text x="1014" y="402" class="mono dim" font-size="15">loaded</text>
+
+    <text x="96" y="464" class="mono muted" font-size="16">User</text>
+    <text x="154" y="464" class="mono text" font-size="16">This should stay visible while the chat scrolls.</text>
+    <text x="96" y="506" class="mono accent" font-size="16">Assistant</text>
+    <text x="190" y="506" class="mono text" font-size="16">Yep — the overlay remains pinned at row 0 and leaves the editor focused.</text>
+
+    <!-- Editor -->
+    <rect x="96" y="590" width="1088" height="70" rx="15" fill="#020617" stroke="#334155" stroke-width="1.4"/>
+    <rect x="108" y="602" width="1064" height="46" rx="11" fill="#07111f"/>
+    <text x="126" y="632" class="mono accent" font-size="18">›</text>
+    <text x="154" y="632" class="mono text" font-size="18">Ask Pi anything…</text>
+    <rect x="342" y="611" width="10" height="28" rx="2" fill="#38bdf8" opacity="0.95"/>
+  </g>
+
+  <text x="72" y="724" class="sans muted" font-size="16">The banner is an overlay: it stays pinned while Pi's conversation scrolls underneath.</text>
 </svg>
