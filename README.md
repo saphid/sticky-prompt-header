@@ -7,7 +7,7 @@ A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your late
 ## What it does
 
 - Shows the latest user prompt in a compact Pi-styled banner.
-- Uses a pi-btw-style floating window anchored at the top of the terminal.
+- Uses a pi-btw-style full-width floating window flush with the top of the terminal.
 - Keeps focus in Pi's normal editor and terminal UI with `nonCapturing: true`.
 - Provides a toggle command plus a manual repaint command.
 
@@ -28,7 +28,7 @@ Then restart Pi or run:
 
 ## Usage
 
-Submit a prompt in Pi. The latest prompt appears in a floating window anchored at the top center of the terminal, using Pi's normal overlay API.
+Submit a prompt in Pi. The latest prompt appears in a full-width floating window flush with the top edge of the terminal, using Pi's normal overlay API.
 
 Commands:
 
@@ -39,4 +39,4 @@ Commands:
 
 ## Notes
 
-This follows the same general floating-window path as pi-btw: `ctx.ui.custom()` with `overlay: true`, `anchor: "top-center"`, margins, and `nonCapturing: true`.
+This follows the same general floating-window path as pi-btw: `ctx.ui.custom()` with `overlay: true`, `anchor: "top-center"`, `width: "100%"`, zero top/side margins, and `nonCapturing: true`.

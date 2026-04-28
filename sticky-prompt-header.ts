@@ -78,13 +78,12 @@ export default function (pi: ExtensionAPI) {
 			{
 				overlay: true,
 				overlayOptions: {
-					// pi-btw-style floating window: anchored and margin-based,
-					// not absolute row/col full-screen chrome.
-					width: "78%",
-					minWidth: 40,
+					// pi-btw-style floating window, but flush with the terminal's
+					// top edge and full width.
+					width: "100%",
 					maxHeight: 4,
 					anchor: "top-center",
-					margin: { top: 1, left: 2, right: 2 },
+					margin: { top: 0, left: 0, right: 0 },
 					nonCapturing: true,
 				},
 				onHandle: (handle) => {
