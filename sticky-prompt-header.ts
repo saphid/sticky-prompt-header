@@ -18,6 +18,7 @@ export default function (pi: ExtensionAPI) {
 	let closeOverlay: (() => void) | undefined;
 	let requestRender: (() => void) | undefined;
 	let repaintNonce = 0;
+	let repaintAfterImages = false;
 	let repaintTimers: ReturnType<typeof setTimeout>[] = [];
 
 	const hasImageContent = (value: unknown): boolean => {
@@ -26,21 +27,20 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	const forceRepaintBurst = () => {
-		if (!enabled || !lastPrompt.trim()) return;
+		if (!enabled || !repaintAfterImages || !lastPrompt.trim()) return;
 		for (const timer of repaintTimers) clearTimeout(timer);
 		repaintTimers = [];
 
-		// Terminal image protocols paint pixel graphics after their placeholder rows
-		// have been written. Pi's overlay compositor runs before that image escape
-		// sequence, so image output can temporarily cover the sticky banner. Trigger
-		// a few no-op-different repaints after image tools finish so the banner is
-		// drawn last again.
-		for (let i = 0; i < 8; i++) {
+		// Optional workaround: terminal image protocols can paint pixel graphics
+		// after Pi's overlay compositor has drawn the banner, temporarily covering
+		// it. This is OFF by default because unsolicited redraws can disturb manual
+		// terminal scrollback while the user is reading older output.
+		for (let i = 0; i < 3; i++) {
 			repaintTimers.push(
 				setTimeout(() => {
 					repaintNonce++;
 					requestRender?.();
-				}, 120 + i * 180),
+				}, 120 + i * 220),
 			);
 		}
 	};
@@ -148,8 +148,22 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("sticky-prompt-header", {
-		description: "Toggle the sticky last-prompt header overlay",
-		handler: async (_args, ctx) => {
+		description: "Toggle the sticky last-prompt header overlay. Args: repaint, image-repaint",
+		handler: async (args, ctx) => {
+			const arg = args.trim().toLowerCase();
+			if (arg === "repaint" || arg === "redraw") {
+				repaintNonce++;
+				requestRender?.();
+				ctx.ui.notify("Sticky prompt header repainted", "info");
+				return;
+			}
+
+			if (arg === "image-repaint" || arg === "images") {
+				repaintAfterImages = !repaintAfterImages;
+				ctx.ui.notify(`Sticky prompt image repaint ${repaintAfterImages ? "enabled" : "disabled"}`, "info");
+				return;
+			}
+
 			enabled = !enabled;
 			if (enabled) {
 				startOverlay(ctx);
