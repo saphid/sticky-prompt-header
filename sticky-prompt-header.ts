@@ -10,9 +10,14 @@ import type { OverlayHandle } from "@mariozechner/pi-tui";
  * visible while the conversation scrolls underneath and does not take focus
  * from the editor.
  */
+type DisplayMode = "widget" | "title" | "overlay";
+
 export default function (pi: ExtensionAPI) {
 	let lastPrompt = "";
 	let enabled = true;
+	// Default to widget mode. It uses Pi's normal layout instead of overlay
+	// compositing, so it does not fight terminal scrollback/footer redraws.
+	let displayMode: DisplayMode = "widget";
 	let overlayStarted = false;
 	let overlayHandle: OverlayHandle | undefined;
 	let closeOverlay: (() => void) | undefined;
@@ -80,8 +85,52 @@ export default function (pi: ExtensionAPI) {
 		return lines;
 	};
 
+	const widgetKey = "sticky-prompt-header";
+
+	const clearOverlay = () => {
+		if (overlayStarted) closeOverlay?.();
+	};
+
+	const clearWidget = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		if (!ctx.hasUI) return;
+		ctx.ui.setWidget(widgetKey, undefined, { placement: "aboveEditor" });
+	};
+
+	const updateTitle = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		if (!ctx.hasUI) return;
+		if (!enabled || !lastPrompt.trim() || displayMode === "overlay") return;
+		const normalized = lastPrompt.replace(/\s+/g, " ").trim();
+		ctx.ui.setTitle(`Pi — ${truncateToWidth(normalized, 80, "…")}`);
+	};
+
+	const updateWidget = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		if (!ctx.hasUI) return;
+		if (!enabled || !lastPrompt.trim() || displayMode !== "widget") {
+			clearWidget(ctx);
+			return;
+		}
+
+		ctx.ui.setWidget(
+			widgetKey,
+			(_tui, theme) => ({
+				render(width: number): string[] {
+					return promptBanner(theme, width);
+				},
+				invalidate() {},
+			}),
+			{ placement: "aboveEditor" },
+		);
+	};
+
+	const updateStableDisplay = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		clearOverlay();
+		updateTitle(ctx);
+		updateWidget(ctx);
+	};
+
 	const startOverlay = (ctx: ExtensionContext | ExtensionCommandContext) => {
-		if (overlayStarted || !ctx.hasUI) return;
+		if (displayMode !== "overlay" || overlayStarted || !ctx.hasUI) return;
+		clearWidget(ctx);
 		overlayStarted = true;
 
 		void ctx.ui.custom<void>(
@@ -119,13 +168,18 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
-		startOverlay(ctx);
+		if (displayMode === "overlay") startOverlay(ctx);
+		else updateStableDisplay(ctx);
 	});
 
 	pi.on("before_agent_start", async (event, ctx) => {
 		lastPrompt = event.prompt;
-		startOverlay(ctx);
-		requestRender?.();
+		if (displayMode === "overlay") {
+			startOverlay(ctx);
+			requestRender?.();
+		} else {
+			updateStableDisplay(ctx);
+		}
 	});
 
 	pi.on("tool_execution_end", async (event) => {
@@ -148,12 +202,13 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("sticky-prompt-header", {
-		description: "Toggle the sticky last-prompt header overlay. Args: repaint, image-repaint",
+		description: "Toggle/show latest prompt. Args: mode widget|title|overlay, repaint, image-repaint",
 		handler: async (args, ctx) => {
 			const arg = args.trim().toLowerCase();
 			if (arg === "repaint" || arg === "redraw") {
 				repaintNonce++;
-				requestRender?.();
+				if (displayMode === "overlay") requestRender?.();
+				else updateStableDisplay(ctx);
 				ctx.ui.notify("Sticky prompt header repainted", "info");
 				return;
 			}
@@ -164,16 +219,36 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
+			const modeMatch = arg.match(/^mode\s+(widget|title|overlay)$/);
+			if (modeMatch) {
+				displayMode = modeMatch[1] as DisplayMode;
+				enabled = true;
+				if (displayMode === "overlay") {
+					clearWidget(ctx);
+					startOverlay(ctx);
+					requestRender?.();
+				} else {
+					updateStableDisplay(ctx);
+				}
+				ctx.ui.notify(`Sticky prompt header mode: ${displayMode}`, "info");
+				return;
+			}
+
 			enabled = !enabled;
 			if (enabled) {
-				startOverlay(ctx);
-				overlayHandle?.setHidden(false);
+				if (displayMode === "overlay") {
+					startOverlay(ctx);
+					overlayHandle?.setHidden(false);
+					requestRender?.();
+				} else {
+					updateStableDisplay(ctx);
+				}
 				ctx.ui.notify("Sticky prompt header enabled", "info");
 			} else {
 				overlayHandle?.setHidden(true);
+				clearWidget(ctx);
 				ctx.ui.notify("Sticky prompt header disabled", "info");
 			}
-			requestRender?.();
 		},
 	});
 }
