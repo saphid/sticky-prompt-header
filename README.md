@@ -7,9 +7,9 @@ A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your late
 ## What it does
 
 - Shows the latest user prompt in a compact Pi-styled banner.
-- Defaults to ANSI paint mode: a top-of-viewport banner appended to Pi's own terminal writes.
+- Defaults to a pi-btw-style floating window anchored at the top of the terminal.
 - Keeps focus in Pi's normal editor and terminal UI.
-- Avoids Pi overlay compositing by default; widget/title/overlay fallback modes are available.
+- Uses Pi's official `ctx.ui.custom(..., { overlay: true })` floating-window API by default.
 - Provides a toggle command plus a manual repaint command for awkward terminal redraws.
 
 ## Install
@@ -29,7 +29,7 @@ Then restart Pi or run:
 
 ## Usage
 
-Submit a prompt in Pi. By default, the latest prompt is painted at the top of the terminal using an ANSI drawing hook appended to Pi's own terminal writes. This avoids Pi overlay compositing and background repaint timers.
+Submit a prompt in Pi. By default, the latest prompt appears in a pi-btw-style floating window anchored at the top center of the terminal. It uses Pi's normal overlay API rather than raw terminal drawing.
 
 Commands:
 
@@ -42,12 +42,13 @@ Commands:
 Switch display modes:
 
 ```text
-/sticky-prompt-header mode ansi     # default, top-of-terminal ANSI paint
+/sticky-prompt-header mode float    # default, pi-btw-style top floating window
+/sticky-prompt-header mode ansi     # experimental raw ANSI paint
 /sticky-prompt-header mode widget   # stable widget above editor
 /sticky-prompt-header mode title    # titlebar only
-/sticky-prompt-header mode overlay  # experimental Pi overlay
+/sticky-prompt-header mode overlay  # legacy full-width top overlay
 ```
 
 ## Notes
 
-The original overlay-only version could disturb terminal scrollback when Pi or the footer/status area repainted. ANSI mode takes a different path: it piggybacks on Pi's own terminal writes and paints the banner last, without scheduling background redraws. Widget/title modes are safer fallbacks; overlay mode remains available for terminals where Pi overlays behave well.
+The default `float` mode follows the same general overlay path as pi-btw: `ctx.ui.custom()` with `overlay: true`, `anchor: "top-center"`, margins, and `nonCapturing: true`. The legacy `overlay` mode is the old absolute row/col full-width header. ANSI/widget/title modes remain as fallbacks.

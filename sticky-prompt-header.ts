@@ -10,7 +10,7 @@ import type { OverlayHandle } from "@mariozechner/pi-tui";
  * visible while the conversation scrolls underneath and does not take focus
  * from the editor.
  */
-type DisplayMode = "ansi" | "widget" | "title" | "overlay";
+type DisplayMode = "float" | "ansi" | "widget" | "title" | "overlay";
 
 type WritableTerminal = {
 	columns?: number;
@@ -20,9 +20,8 @@ type WritableTerminal = {
 export default function (pi: ExtensionAPI) {
 	let lastPrompt = "";
 	let enabled = true;
-	// Default to ANSI paint mode. It does not use Pi overlay compositing;
-	// instead it appends a top-of-viewport paint to Pi's own terminal writes.
-	let displayMode: DisplayMode = "ansi";
+	// Default to Pi's normal floating-window overlay path, like pi-btw.
+	let displayMode: DisplayMode = "float";
 	let overlayStarted = false;
 	let overlayHandle: OverlayHandle | undefined;
 	let closeOverlay: (() => void) | undefined;
@@ -144,6 +143,10 @@ export default function (pi: ExtensionAPI) {
 
 	const clearOverlay = () => {
 		if (overlayStarted) closeOverlay?.();
+		overlayStarted = false;
+		overlayHandle = undefined;
+		closeOverlay = undefined;
+		requestRender = undefined;
 	};
 
 	const clearWidget = (ctx: ExtensionContext | ExtensionCommandContext) => {
@@ -178,14 +181,14 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	const updateStableDisplay = (ctx: ExtensionContext | ExtensionCommandContext) => {
-		installTerminalHook(ctx);
+		if (displayMode === "ansi") installTerminalHook(ctx);
 		clearOverlay();
 		updateTitle(ctx);
 		updateWidget(ctx);
 	};
 
 	const startOverlay = (ctx: ExtensionContext | ExtensionCommandContext) => {
-		if (displayMode !== "overlay" || overlayStarted || !ctx.hasUI) return;
+		if ((displayMode !== "float" && displayMode !== "overlay") || overlayStarted || !ctx.hasUI) return;
 		clearWidget(ctx);
 		overlayStarted = true;
 
@@ -209,13 +212,26 @@ export default function (pi: ExtensionAPI) {
 			},
 			{
 				overlay: true,
-				overlayOptions: {
-					row: 0,
-					col: 0,
-					width: "100%",
-					maxHeight: 4,
-					nonCapturing: true,
-				},
+				overlayOptions:
+					displayMode === "float"
+						? {
+								// pi-btw-style floating window: anchored and margin-based,
+								// not absolute row/col full-screen chrome.
+								width: "78%",
+								minWidth: 40,
+								maxHeight: 4,
+								anchor: "top-center",
+								margin: { top: 1, left: 2, right: 2 },
+								nonCapturing: true,
+							}
+						: {
+								// Legacy full-width sticky overlay.
+								row: 0,
+								col: 0,
+								width: "100%",
+								maxHeight: 4,
+								nonCapturing: true,
+							},
 				onHandle: (handle) => {
 					overlayHandle = handle;
 				},
@@ -224,14 +240,13 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
-		installTerminalHook(ctx);
-		if (displayMode === "overlay") startOverlay(ctx);
+		if (displayMode === "float" || displayMode === "overlay") startOverlay(ctx);
 		else updateStableDisplay(ctx);
 	});
 
 	pi.on("before_agent_start", async (event, ctx) => {
 		lastPrompt = event.prompt;
-		if (displayMode === "overlay") {
+		if (displayMode === "float" || displayMode === "overlay") {
 			startOverlay(ctx);
 			requestRender?.();
 		} else {
@@ -261,7 +276,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("sticky-prompt-header", {
-		description: "Toggle/show latest prompt. Args: mode ansi|widget|title|overlay, repaint, image-repaint",
+		description: "Toggle/show latest prompt. Args: mode float|ansi|widget|title|overlay, repaint, image-repaint",
 		handler: async (args, ctx) => {
 			const arg = args.trim().toLowerCase();
 			if (arg === "repaint" || arg === "redraw") {
@@ -278,11 +293,13 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			const modeMatch = arg.match(/^mode\s+(ansi|widget|title|overlay)$/);
+			const modeMatch = arg.match(/^mode\s+(float|ansi|widget|title|overlay)$/);
 			if (modeMatch) {
+				const previousMode = displayMode;
 				displayMode = modeMatch[1] as DisplayMode;
 				enabled = true;
-				if (displayMode === "overlay") {
+				if (previousMode === "float" || previousMode === "overlay") clearOverlay();
+				if (displayMode === "float" || displayMode === "overlay") {
 					clearWidget(ctx);
 					startOverlay(ctx);
 					requestRender?.();
@@ -296,7 +313,7 @@ export default function (pi: ExtensionAPI) {
 
 			enabled = !enabled;
 			if (enabled) {
-				if (displayMode === "overlay") {
+				if (displayMode === "float" || displayMode === "overlay") {
 					startOverlay(ctx);
 					overlayHandle?.setHidden(false);
 					requestRender?.();
