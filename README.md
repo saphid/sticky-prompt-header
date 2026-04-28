@@ -7,9 +7,9 @@ A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your late
 ## What it does
 
 - Shows the latest user prompt in a compact Pi-styled banner.
-- Defaults to a stable widget above the editor and mirrors the prompt into the terminal title.
+- Defaults to ANSI paint mode: a top-of-viewport banner appended to Pi's own terminal writes.
 - Keeps focus in Pi's normal editor and terminal UI.
-- Provides an experimental sticky top overlay mode for terminals where overlays behave well.
+- Avoids Pi overlay compositing by default; widget/title/overlay fallback modes are available.
 - Provides a toggle command plus a manual repaint command for awkward terminal redraws.
 
 ## Install
@@ -29,7 +29,7 @@ Then restart Pi or run:
 
 ## Usage
 
-Submit a prompt in Pi. By default, the latest prompt appears as a stable Pi widget above the editor and is mirrored into the terminal title. This avoids the scrollback glitches caused by overlay redraws.
+Submit a prompt in Pi. By default, the latest prompt is painted at the top of the terminal using an ANSI drawing hook appended to Pi's own terminal writes. This avoids Pi overlay compositing and background repaint timers.
 
 Commands:
 
@@ -42,11 +42,12 @@ Commands:
 Switch display modes:
 
 ```text
-/sticky-prompt-header mode widget   # default, stable
+/sticky-prompt-header mode ansi     # default, top-of-terminal ANSI paint
+/sticky-prompt-header mode widget   # stable widget above editor
 /sticky-prompt-header mode title    # titlebar only
-/sticky-prompt-header mode overlay  # experimental sticky top overlay
+/sticky-prompt-header mode overlay  # experimental Pi overlay
 ```
 
 ## Notes
 
-The original overlay-only version could disturb terminal scrollback when Pi or the footer/status area repainted. Widget mode avoids overlay compositing and is the safer default. Overlay mode remains available, but Pi extensions do not currently expose viewport or message-position events, so a perfectly scrollback-aware sticky top header likely needs Pi core support.
+The original overlay-only version could disturb terminal scrollback when Pi or the footer/status area repainted. ANSI mode takes a different path: it piggybacks on Pi's own terminal writes and paints the banner last, without scheduling background redraws. Widget/title modes are safer fallbacks; overlay mode remains available for terminals where Pi overlays behave well.

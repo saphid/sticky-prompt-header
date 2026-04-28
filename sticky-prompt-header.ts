@@ -10,14 +10,19 @@ import type { OverlayHandle } from "@mariozechner/pi-tui";
  * visible while the conversation scrolls underneath and does not take focus
  * from the editor.
  */
-type DisplayMode = "widget" | "title" | "overlay";
+type DisplayMode = "ansi" | "widget" | "title" | "overlay";
+
+type WritableTerminal = {
+	columns?: number;
+	write(data: string): void;
+};
 
 export default function (pi: ExtensionAPI) {
 	let lastPrompt = "";
 	let enabled = true;
-	// Default to widget mode. It uses Pi's normal layout instead of overlay
-	// compositing, so it does not fight terminal scrollback/footer redraws.
-	let displayMode: DisplayMode = "widget";
+	// Default to ANSI paint mode. It does not use Pi overlay compositing;
+	// instead it appends a top-of-viewport paint to Pi's own terminal writes.
+	let displayMode: DisplayMode = "ansi";
 	let overlayStarted = false;
 	let overlayHandle: OverlayHandle | undefined;
 	let closeOverlay: (() => void) | undefined;
@@ -25,6 +30,9 @@ export default function (pi: ExtensionAPI) {
 	let repaintNonce = 0;
 	let repaintAfterImages = false;
 	let repaintTimers: ReturnType<typeof setTimeout>[] = [];
+	let terminalHookStarted = false;
+	let terminalPatched = false;
+	let unpatchTerminal: (() => void) | undefined;
 
 	const hasImageContent = (value: unknown): boolean => {
 		if (!Array.isArray(value)) return false;
@@ -86,6 +94,53 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	const widgetKey = "sticky-prompt-header";
+	const terminalHookKey = "sticky-prompt-header-terminal-hook";
+
+	const renderAnsiHeader = (theme: Theme, width: number) => {
+		if (!enabled || displayMode !== "ansi" || !lastPrompt.trim()) return "";
+		const lines = promptBanner(theme, width);
+		if (lines.length === 0) return "";
+
+		// Save cursor, paint absolute top rows, then restore cursor. This is a
+		// separate drawing path from Pi's overlay system, and is appended to Pi's
+		// own writes so it does not introduce background repaint timers.
+		return `\x1b7\x1b[1;1H${lines.map((line) => `\x1b[2K${line}`).join("\r\n")}\x1b8`;
+	};
+
+	const installTerminalHook = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		if (terminalHookStarted || !ctx.hasUI) return;
+		terminalHookStarted = true;
+
+		ctx.ui.setWidget(
+			terminalHookKey,
+			(tui, theme) => {
+				if (!terminalPatched) {
+					const terminal = (tui as unknown as { terminal?: WritableTerminal }).terminal;
+					if (terminal) {
+						const originalWrite = terminal.write.bind(terminal);
+						terminal.write = (data: string) => {
+							const width = Math.max(1, terminal.columns ?? 80);
+							originalWrite(data + renderAnsiHeader(theme, width));
+						};
+						terminalPatched = true;
+						unpatchTerminal = () => {
+							terminal.write = originalWrite;
+							terminalPatched = false;
+						};
+					}
+				}
+
+				return {
+					render(): string[] {
+						return [];
+					},
+					invalidate() {},
+					dispose() {},
+				};
+			},
+			{ placement: "aboveEditor" },
+		);
+	};
 
 	const clearOverlay = () => {
 		if (overlayStarted) closeOverlay?.();
@@ -98,7 +153,7 @@ export default function (pi: ExtensionAPI) {
 
 	const updateTitle = (ctx: ExtensionContext | ExtensionCommandContext) => {
 		if (!ctx.hasUI) return;
-		if (!enabled || !lastPrompt.trim() || displayMode === "overlay") return;
+		if (!enabled || !lastPrompt.trim() || displayMode === "overlay" || displayMode === "ansi") return;
 		const normalized = lastPrompt.replace(/\s+/g, " ").trim();
 		ctx.ui.setTitle(`Pi — ${truncateToWidth(normalized, 80, "…")}`);
 	};
@@ -123,6 +178,7 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	const updateStableDisplay = (ctx: ExtensionContext | ExtensionCommandContext) => {
+		installTerminalHook(ctx);
 		clearOverlay();
 		updateTitle(ctx);
 		updateWidget(ctx);
@@ -168,6 +224,7 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
+		installTerminalHook(ctx);
 		if (displayMode === "overlay") startOverlay(ctx);
 		else updateStableDisplay(ctx);
 	});
@@ -199,10 +256,12 @@ export default function (pi: ExtensionAPI) {
 		for (const timer of repaintTimers) clearTimeout(timer);
 		repaintTimers = [];
 		closeOverlay?.();
+		unpatchTerminal?.();
+		unpatchTerminal = undefined;
 	});
 
 	pi.registerCommand("sticky-prompt-header", {
-		description: "Toggle/show latest prompt. Args: mode widget|title|overlay, repaint, image-repaint",
+		description: "Toggle/show latest prompt. Args: mode ansi|widget|title|overlay, repaint, image-repaint",
 		handler: async (args, ctx) => {
 			const arg = args.trim().toLowerCase();
 			if (arg === "repaint" || arg === "redraw") {
@@ -219,7 +278,7 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			const modeMatch = arg.match(/^mode\s+(widget|title|overlay)$/);
+			const modeMatch = arg.match(/^mode\s+(ansi|widget|title|overlay)$/);
 			if (modeMatch) {
 				displayMode = modeMatch[1] as DisplayMode;
 				enabled = true;
@@ -229,6 +288,7 @@ export default function (pi: ExtensionAPI) {
 					requestRender?.();
 				} else {
 					updateStableDisplay(ctx);
+					requestRender?.();
 				}
 				ctx.ui.notify(`Sticky prompt header mode: ${displayMode}`, "info");
 				return;
