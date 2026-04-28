@@ -7,10 +7,9 @@ A tiny [Pi](https://github.com/badlogic/pi-mono/) extension that keeps your late
 ## What it does
 
 - Shows the latest user prompt in a compact Pi-styled banner.
-- Defaults to a pi-btw-style floating window anchored at the top of the terminal.
-- Keeps focus in Pi's normal editor and terminal UI.
-- Uses Pi's official `ctx.ui.custom(..., { overlay: true })` floating-window API by default.
-- Provides a toggle command plus a manual repaint command for awkward terminal redraws.
+- Uses a pi-btw-style floating window anchored at the top of the terminal.
+- Keeps focus in Pi's normal editor and terminal UI with `nonCapturing: true`.
+- Provides a toggle command plus a manual repaint command.
 
 ## Install
 
@@ -29,26 +28,15 @@ Then restart Pi or run:
 
 ## Usage
 
-Submit a prompt in Pi. By default, the latest prompt appears in a pi-btw-style floating window anchored at the top center of the terminal. It uses Pi's normal overlay API rather than raw terminal drawing.
+Submit a prompt in Pi. The latest prompt appears in a floating window anchored at the top center of the terminal, using Pi's normal overlay API.
 
 Commands:
 
 ```text
 /sticky-prompt-header              # toggle on/off
 /sticky-prompt-header repaint      # force a redraw
-/sticky-prompt-header images       # toggle extra redraws after image tool output
-```
-
-Switch display modes:
-
-```text
-/sticky-prompt-header mode float    # default, pi-btw-style top floating window
-/sticky-prompt-header mode ansi     # experimental raw ANSI paint
-/sticky-prompt-header mode widget   # stable widget above editor
-/sticky-prompt-header mode title    # titlebar only
-/sticky-prompt-header mode overlay  # legacy full-width top overlay
 ```
 
 ## Notes
 
-The default `float` mode follows the same general overlay path as pi-btw: `ctx.ui.custom()` with `overlay: true`, `anchor: "top-center"`, margins, and `nonCapturing: true`. The legacy `overlay` mode is the old absolute row/col full-width header. ANSI/widget/title modes remain as fallbacks.
+This follows the same general floating-window path as pi-btw: `ctx.ui.custom()` with `overlay: true`, `anchor: "top-center"`, margins, and `nonCapturing: true`.
